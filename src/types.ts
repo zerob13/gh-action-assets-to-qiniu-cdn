@@ -82,6 +82,6 @@ export interface UploadResult {
 }
 
 export interface ProcessResult {
-  downloaded?: DownloadResult;
+  downloaded?: DownloadResult | undefined;
   uploaded: UploadResult;
 }

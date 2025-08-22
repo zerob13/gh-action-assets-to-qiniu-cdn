@@ -97,7 +97,7 @@ async function downloadGitHubArtifact(config: AppConfig): Promise<DownloadResult
     const writer = fs.createWriteStream(zipPath);
     response.data.pipe(writer);
 
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       writer.on('finish', resolve);
       writer.on('error', reject);
     });
@@ -127,21 +127,21 @@ async function downloadGitHubArtifact(config: AppConfig): Promise<DownloadResult
 }
 
 async function uploadToQiniu(config: AppConfig, sourceDir: string): Promise<UploadResult> {
-  const { qiniu, artifacts, upload, options } = config;
+  const { qiniu: qiniuConfig, artifacts, upload, options } = config;
   
-  if (!qiniu) {
+  if (!qiniuConfig) {
     throw new Error('Qiniu configuration is required');
   }
 
-  const { accessKey, secretKey, bucket, zone = 'z0' } = qiniu;
+  const { accessKey, secretKey, bucket, zone = 'z0' } = qiniuConfig;
   const { patterns = ['**/*'], pathMapping = {} } = artifacts || {};
   const { cdnBasePath = '/', overwrite = true, cleanupAfterUpload = true } = upload || {};
   
   // Configure Qiniu
   const mac = new qiniu.auth.digest.Mac(accessKey, secretKey);
-  const qiniuConfig = new qiniu.conf.Config();
-  qiniuConfig.zone = (qiniu.zone as any)[zone];
-  const formUploader = new qiniu.form_up.FormUploader(qiniuConfig);
+  const qiniuSdkConfig = new qiniu.conf.Config();
+  qiniuSdkConfig.zone = (qiniu.zone as any)[zone];
+  const formUploader = new qiniu.form_up.FormUploader(qiniuSdkConfig);
   const putExtra = new qiniu.form_up.PutExtra();
 
   // Find files to upload
@@ -190,7 +190,7 @@ async function uploadToQiniu(config: AppConfig, sourceDir: string): Promise<Uplo
       const putPolicy = new qiniu.rs.PutPolicy({
         scope: bucket,
         expires: 3600,
-        insertOnly: !overwrite
+        insertOnly: overwrite ? 0 : 1
       });
       const uploadToken = putPolicy.uploadToken(mac);
 
@@ -330,8 +330,13 @@ export async function processArtifacts(config: AppConfig): Promise<ProcessResult
   // Upload to Qiniu
   const uploadResult = await uploadToQiniu(config, workingDir);
 
-  return {
-    downloaded: downloadResult,
+  const result: ProcessResult = {
     uploaded: uploadResult
   };
+  
+  if (downloadResult) {
+    result.downloaded = downloadResult;
+  }
+  
+  return result;
 }
