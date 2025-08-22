@@ -1,0 +1,25 @@
+{
+  "version": "1.0.0",
+  "qiniu": {
+    "accessKey": "your_qiniu_access_key",
+    "secretKey": "your_qiniu_secret_key",
+    "bucket": "your_bucket_name",
+    "zone": "z0"
+  },
+  "artifacts": {
+    "patterns": ["dist/**", "build/*.zip"],
+    "pathMapping": {
+      "dist/": "static/",
+      "build/": "releases/"
+    }
+  },
+  "upload": {
+    "cdnBasePath": "assets/",
+    "overwrite": true,
+    "cleanupAfterUpload": true
+  },
+  "options": {
+    "verbose": false,
+    "maxRetries": 3
+  }
+}

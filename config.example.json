@@ -1,0 +1,41 @@
+{
+  "$schema": "./config.schema.json",
+  "version": "1.0.0",
+  "qiniu": {
+    "accessKey": "your_qiniu_access_key",
+    "secretKey": "your_qiniu_secret_key",
+    "bucket": "your_bucket_name",
+    "zone": "z0"
+  },
+  "github": {
+    "token": "your_github_pat",
+    "owner": "your_username_or_org",
+    "repo": "your_repository_name",
+    "runId": 123456789,
+    "artifactName": "production-build"
+  },
+  "artifacts": {
+    "download": true,
+    "downloadDir": "./downloaded-artifacts",
+    "patterns": ["**/*"],
+    "pathMapping": {
+      "dist/": "static/",
+      "build/": "releases/",
+      "packages/app/lib/": "app/"
+    }
+  },
+  "upload": {
+    "cdnBasePath": "assets/",
+    "overwrite": true,
+    "cleanupAfterUpload": true
+  },
+  "processing": {
+    "postProcessScript": "npm run optimize-assets",
+    "workingDirectory": "./downloaded-artifacts"
+  },
+  "options": {
+    "verbose": false,
+    "maxRetries": 3,
+    "timeout": 30000
+  }
+}

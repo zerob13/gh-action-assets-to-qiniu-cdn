@@ -1,0 +1,147 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GitHub Action to Qiniu CDN Configuration",
+  "type": "object",
+  "required": ["qiniu"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Configuration version"
+    },
+    "qiniu": {
+      "type": "object",
+      "required": ["accessKey", "secretKey", "bucket"],
+      "properties": {
+        "accessKey": {
+          "type": "string",
+          "description": "Qiniu Access Key"
+        },
+        "secretKey": {
+          "type": "string",
+          "description": "Qiniu Secret Key"
+        },
+        "bucket": {
+          "type": "string",
+          "description": "Qiniu Bucket Name"
+        },
+        "zone": {
+          "type": "string",
+          "enum": ["z0", "z1", "z2", "na0", "as0"],
+          "default": "z0",
+          "description": "Qiniu Zone"
+        }
+      }
+    },
+    "github": {
+      "type": "object",
+      "required": ["token", "owner", "repo"],
+      "properties": {
+        "token": {
+          "type": "string",
+          "description": "GitHub Personal Access Token"
+        },
+        "owner": {
+          "type": "string",
+          "description": "GitHub owner (username or organization)"
+        },
+        "repo": {
+          "type": "string",
+          "description": "GitHub repository name"
+        },
+        "runId": {
+          "type": "integer",
+          "description": "Specific workflow run ID"
+        },
+        "artifactName": {
+          "type": "string",
+          "description": "Specific artifact name to download"
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "properties": {
+        "download": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to download artifacts from GitHub"
+        },
+        "downloadDir": {
+          "type": "string",
+          "default": "./artifacts",
+          "description": "Directory to download artifacts to"
+        },
+        "patterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": ["**/*"],
+          "description": "Glob patterns to match files"
+        },
+        "pathMapping": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "Mapping from local paths to CDN paths"
+        }
+      }
+    },
+    "upload": {
+      "type": "object",
+      "properties": {
+        "cdnBasePath": {
+          "type": "string",
+          "default": "/",
+          "description": "Base path on CDN"
+        },
+        "overwrite": {
+          "type": "boolean",
+          "default": true,
+          "description": "Overwrite existing files on CDN"
+        },
+        "cleanupAfterUpload": {
+          "type": "boolean",
+          "default": true,
+          "description": "Cleanup local files after upload"
+        }
+      }
+    },
+    "processing": {
+      "type": "object",
+      "properties": {
+        "postProcessScript": {
+          "type": "string",
+          "description": "Script to run after download/before upload"
+        },
+        "workingDirectory": {
+          "type": "string",
+          "default": ".",
+          "description": "Working directory for post-processing"
+        }
+      }
+    },
+    "options": {
+      "type": "object",
+      "properties": {
+        "verbose": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable verbose logging"
+        },
+        "maxRetries": {
+          "type": "integer",
+          "default": 3,
+          "description": "Maximum retry attempts for uploads"
+        },
+        "timeout": {
+          "type": "integer",
+          "default": 30000,
+          "description": "Timeout for operations in milliseconds"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "gh-action-assets-to-qiniu-cdn",
+  "version": "1.0.0",
+  "description": "CLI tool to upload GitHub Action artifacts to Qiniu CDN with flexible mapping and post-processing",
+  "main": "src/index.js",
+  "bin": {
+    "action-to-qiniu": "./src/cli.js"
+  },
+  "scripts": {
+    "start": "node src/cli.js",
+    "test": "jest",
+    "lint": "eslint src/**/*.js",
+    "dev": "node src/cli.js -c config.example.json -v"
+  },
+  "keywords": [
+    "cli",
+    "qiniu",
+    "cdn",
+    "github-actions",
+    "artifacts",
+    "upload"
+  ],
+  "author": "duskzhen",
+  "license": "MIT",
+  "dependencies": {
+    "qiniu": "^7.8.0",
+    "glob": "^10.3.0",
+    "dotenv": "^16.3.0",
+    "fs-extra": "^11.1.0",
+    "commander": "^11.0.0",
+    "chalk": "^4.1.2",
+    "@octokit/rest": "^20.0.0",
+    "axios": "^1.5.0",
+    "ajv": "^8.12.0",
+    "extract-zip": "^2.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.6.0",
+    "eslint": "^8.45.0"
+  }
+}
