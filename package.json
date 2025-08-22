@@ -2,15 +2,17 @@
   "name": "gh-action-assets-to-qiniu-cdn",
   "version": "1.0.0",
   "description": "CLI tool to upload GitHub Action artifacts to Qiniu CDN with flexible mapping and post-processing",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "bin": {
-    "action-to-qiniu": "./src/cli.js"
+    "action-to-qiniu": "./dist/cli.js"
   },
   "scripts": {
-    "start": "node src/cli.js",
-    "test": "jest",
-    "lint": "eslint src/**/*.js",
-    "dev": "node src/cli.js -c config.example.json -v"
+    "build": "tsc",
+    "start": "bun run dist/cli.js",
+    "dev": "bun run src/cli.ts -c config.example.json -v",
+    "test": "bun test",
+    "lint": "eslint src/**/*.ts",
+    "clean": "rm -rf dist"
   },
   "keywords": [
     "cli",
@@ -18,7 +20,9 @@
     "cdn",
     "github-actions",
     "artifacts",
-    "upload"
+    "upload",
+    "bun",
+    "typescript"
   ],
   "author": "duskzhen",
   "license": "MIT",
@@ -35,7 +39,13 @@
     "extract-zip": "^2.0.0"
   },
   "devDependencies": {
-    "jest": "^29.6.0",
-    "eslint": "^8.45.0"
-  }
+    "@types/bun": "^1.0.2",
+    "@types/glob": "^8.1.0",
+    "@types/extract-zip": "^1.7.0",
+    "@types/fs-extra": "^11.0.1",
+    "@types/node": "^20.5.0",
+    "typescript": "^5.1.6"
+  },
+  "module": "src/index.ts",
+  "type": "module"
 }

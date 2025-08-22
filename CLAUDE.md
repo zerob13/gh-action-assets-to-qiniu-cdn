@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a CLI tool for uploading GitHub Action artifacts to Qiniu CDN. It provides flexible file mapping, post-processing, and multiple configuration options.
+This is a TypeScript CLI tool for uploading GitHub Action artifacts to Qiniu CDN, designed to run with Bun. It provides flexible file mapping, post-processing, and multiple configuration options with full type safety.
 
 ## Project Structure
 
@@ -31,23 +31,32 @@ This is a CLI tool for uploading GitHub Action artifacts to Qiniu CDN. It provid
 ## Development Commands
 
 ```bash
-# Install dependencies
-npm install
+# Install dependencies with Bun
+bun install
+
+# Build TypeScript to JavaScript
+bun run build
 
 # Run with example config (development mode)
-npm run dev
+bun run dev
 
 # Run with custom config
-node src/cli.js -c config.example.json -v
+bun run src/cli.ts -c config.example.json -v
 
 # Run tests (when implemented)
-npm test
+bun test
+
+# Start the built version
+bun run start
 
 # Lint code
-npm run lint
+bun run lint
+
+# Clean build artifacts
+bun run clean
 
 # Install globally for CLI usage
-npm install -g .
+bun install -g .
 ```
 
 ## Configuration System

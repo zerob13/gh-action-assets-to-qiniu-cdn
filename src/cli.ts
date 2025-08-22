@@ -1,10 +1,11 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
-const { program } = require('commander');
-const chalk = require('chalk');
-const fs = require('fs-extra');
-const path = require('path');
-const { processArtifacts } = require('./index');
+import { program } from 'commander';
+import chalk from 'chalk';
+import fs from 'fs-extra';
+import path from 'path';
+import { processArtifacts } from './index.js';
+import type { AppConfig } from './types.js';
 
 program
   .name('action-to-qiniu')
@@ -19,7 +20,7 @@ program.parse(process.argv);
 
 const options = program.opts();
 
-async function main() {
+async function main(): Promise<void> {
   try {
     const configPath = path.resolve(options.config);
     
@@ -29,7 +30,7 @@ async function main() {
       process.exit(1);
     }
 
-    const config = await fs.readJson(configPath);
+    const config = await fs.readJson(configPath) as AppConfig;
     
     // Override verbose setting if specified via CLI
     if (options.verbose !== undefined) {
@@ -43,7 +44,7 @@ async function main() {
 
     const result = await processArtifacts(config);
     
-    console.log(chalk.green(`\n✅ Process completed!`));
+    console.log(chalk.green('\n✅ Process completed!'));
     
     if (result.downloaded) {
       console.log(chalk.blue(`📥 Downloaded: ${result.downloaded.count} artifacts`));
@@ -68,9 +69,9 @@ async function main() {
     }
 
   } catch (error) {
-    console.error(chalk.red(`\n❌ Error: ${error.message}`));
-    if (error.stack && options.verbose) {
-      console.error(chalk.red(error.stack));
+    console.error(chalk.red(`\n❌ Error: ${(error as Error).message}`));
+    if ((error as Error).stack && options.verbose) {
+      console.error(chalk.red((error as Error).stack));
     }
     process.exit(1);
   }

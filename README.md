@@ -14,12 +14,26 @@ A CLI tool to download GitHub Action artifacts and upload them to Qiniu CDN with
 
 ## Installation
 
+### Using Bun (Recommended)
+
 ```bash
-npm install -g gh-action-assets-to-qiniu-cdn
+# Install globally with Bun
+bun install -g gh-action-assets-to-qiniu-cdn
+
+# Or use with bunx
+bunx gh-action-assets-to-qiniu-cdn
+
+# Or install locally
+bun install gh-action-assets-to-qiniu-cdn
 ```
 
-Or use with npx:
+### Using npm/npx
+
 ```bash
+# Install globally with npm
+npm install -g gh-action-assets-to-qiniu-cdn
+
+# Or use with npx
 npx gh-action-assets-to-qiniu-cdn
 ```
 
@@ -300,22 +314,41 @@ jobs:
 
 ## Development
 
+This project is built with TypeScript and designed to run with Bun.
+
 ```bash
 # Install dependencies
-npm install
+bun install
+
+# Build TypeScript to JavaScript
+bun run build
 
 # Run with example config (development mode)
-npm run dev
+bun run dev
 
 # Run with custom config
-node src/cli.js -c config.example.json -v
+bun run src/cli.ts -c config.example.json -v
 
 # Run tests (when implemented)
-npm test
+bun test
+
+# Start the built version
+bun run start
 
 # Lint code
-npm run lint
+bun run lint
+
+# Clean build artifacts
+bun run clean
 ```
+
+### TypeScript Development
+
+The project includes comprehensive TypeScript types:
+- Full type definitions for configuration
+- Type-safe function interfaces
+- JSON schema validation
+- Editor support with TypeScript
 
 ## License
 

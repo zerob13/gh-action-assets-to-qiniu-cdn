@@ -1,18 +1,27 @@
-const qiniu = require('qiniu');
-const glob = require('glob');
-const fs = require('fs-extra');
-const path = require('path');
-const { execSync } = require('child_process');
-const { Octokit } = require('@octokit/rest');
-const axios = require('axios');
-const Ajv = require('ajv');
+import qiniu from 'qiniu';
+import { glob } from 'glob';
+import fs from 'fs-extra';
+import path from 'path';
+import { execSync } from 'child_process';
+import { Octokit } from '@octokit/rest';
+import axios from 'axios';
+import Ajv from 'ajv';
+import extract from 'extract-zip';
+
+import type {
+  AppConfig,
+  DownloadResult,
+  UploadResult,
+  ProcessResult,
+  DownloadedFile
+} from './types.js';
 
 const ajv = new Ajv();
 
 // Load schema for validation
-const configSchema = require('../config.schema.json');
+const configSchema = await fs.readJson('./config.schema.json');
 
-async function downloadGitHubArtifact(config) {
+async function downloadGitHubArtifact(config: AppConfig): Promise<DownloadResult | null> {
   const { github, artifacts, options } = config;
   
   if (!github || !artifacts?.download) {
@@ -31,7 +40,7 @@ async function downloadGitHubArtifact(config) {
   // Ensure download directory exists
   await fs.ensureDir(downloadDir);
 
-  let artifactsList;
+  let artifactsList: any[];
   
   if (runId) {
     // Get artifacts for specific run
@@ -58,7 +67,7 @@ async function downloadGitHubArtifact(config) {
     throw new Error('No artifacts found matching criteria');
   }
 
-  const downloadedFiles = [];
+  const downloadedFiles: DownloadedFile[] = [];
 
   for (const artifact of artifactsList) {
     const downloadResponse = await octokit.actions.downloadArtifact({
@@ -94,7 +103,6 @@ async function downloadGitHubArtifact(config) {
     });
 
     // Extract zip file
-    const extract = require('extract-zip');
     await extract(zipPath, { dir: artifactDir });
     
     // Remove zip file
@@ -118,7 +126,7 @@ async function downloadGitHubArtifact(config) {
   };
 }
 
-async function uploadToQiniu(config, sourceDir) {
+async function uploadToQiniu(config: AppConfig, sourceDir: string): Promise<UploadResult> {
   const { qiniu, artifacts, upload, options } = config;
   
   if (!qiniu) {
@@ -132,12 +140,12 @@ async function uploadToQiniu(config, sourceDir) {
   // Configure Qiniu
   const mac = new qiniu.auth.digest.Mac(accessKey, secretKey);
   const qiniuConfig = new qiniu.conf.Config();
-  qiniuConfig.zone = qiniu.zone[zone];
+  qiniuConfig.zone = (qiniu.zone as any)[zone];
   const formUploader = new qiniu.form_up.FormUploader(qiniuConfig);
   const putExtra = new qiniu.form_up.PutExtra();
 
   // Find files to upload
-  const files = [];
+  const files: string[] = [];
   for (const pattern of patterns) {
     const matches = glob.sync(pattern, { cwd: sourceDir, absolute: true });
     files.push(...matches);
@@ -152,8 +160,8 @@ async function uploadToQiniu(config, sourceDir) {
   }
 
   // Upload files
-  const uploadedFiles = [];
-  const failedFiles = [];
+  const uploadedFiles: any[] = [];
+  const failedFiles: any[] = [];
 
   for (const localFilePath of files) {
     const relativePath = path.relative(sourceDir, localFilePath);
@@ -193,7 +201,7 @@ async function uploadToQiniu(config, sourceDir) {
           cdnFilePath,
           localFilePath,
           putExtra,
-          (err, body, info) => {
+          (err: any, body: any, info: any) => {
             if (err) {
               reject(err);
             } else if (info.statusCode === 200) {
@@ -208,9 +216,9 @@ async function uploadToQiniu(config, sourceDir) {
       uploadedFiles.push({
         local: relativePath,
         remote: cdnFilePath,
-        key: response.key,
-        hash: response.hash,
-        size: response.fsize
+        key: (response as any).key,
+        hash: (response as any).hash,
+        size: (response as any).fsize
       });
 
       if (options?.verbose) {
@@ -221,11 +229,11 @@ async function uploadToQiniu(config, sourceDir) {
       failedFiles.push({
         local: relativePath,
         remote: cdnFilePath,
-        error: error.message
+        error: (error as Error).message
       });
 
       if (options?.verbose) {
-        console.error(`❌ Failed to upload ${relativePath}: ${error.message}`);
+        console.error(`❌ Failed to upload ${relativePath}: ${(error as Error).message}`);
       }
     }
   }
@@ -240,7 +248,7 @@ async function uploadToQiniu(config, sourceDir) {
         await fs.remove(file);
       } catch (error) {
         if (options?.verbose) {
-          console.warn(`⚠️  Could not cleanup file ${file}: ${error.message}`);
+          console.warn(`⚠️  Could not cleanup file ${file}: ${(error as Error).message}`);
         }
       }
     }
@@ -255,7 +263,7 @@ async function uploadToQiniu(config, sourceDir) {
   };
 }
 
-async function runPostProcessScript(config, workingDir) {
+async function runPostProcessScript(config: AppConfig, workingDir: string): Promise<void> {
   const { processing, options } = config;
   
   if (!processing?.postProcessScript) {
@@ -279,23 +287,23 @@ async function runPostProcessScript(config, workingDir) {
       console.log('✅ Post-processing script completed successfully');
     }
   } catch (error) {
-    throw new Error(`Post-processing script failed: ${error.message}`);
+    throw new Error(`Post-processing script failed: ${(error as Error).message}`);
   }
 }
 
-function validateConfig(config) {
+function validateConfig(config: AppConfig): void {
   const validate = ajv.compile(configSchema);
   const valid = validate(config);
   
   if (!valid) {
-    const errors = validate.errors.map(err => 
+    const errors = validate.errors?.map(err => 
       `${err.instancePath} ${err.message}`
-    ).join('\n');
+    ).join('\n') || 'Unknown validation error';
     throw new Error(`Configuration validation failed:\n${errors}`);
   }
 }
 
-async function processArtifacts(config) {
+export async function processArtifacts(config: AppConfig): Promise<ProcessResult> {
   // Validate configuration
   validateConfig(config);
 
@@ -305,7 +313,7 @@ async function processArtifacts(config) {
     console.log('🚀 Starting artifact processing...');
   }
 
-  let downloadResult = null;
+  let downloadResult: DownloadResult | null = null;
   let workingDir = process.cwd();
 
   // Download artifacts from GitHub if configured
@@ -327,5 +335,3 @@ async function processArtifacts(config) {
     uploaded: uploadResult
   };
 }
-
-module.exports = { processArtifacts };
