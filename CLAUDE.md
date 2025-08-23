@@ -10,11 +10,12 @@ This is a TypeScript CLI tool for uploading GitHub Action artifacts to Qiniu CDN
 
 ```
 ├── src/
-│   ├── index.js          # Core upload functionality
-│   └── cli.js           # CLI interface and argument parsing
+│   ├── index.ts         # Core upload functionality
+│   ├── cli.ts           # CLI interface and argument parsing
+│   └── types.ts         # TypeScript type definitions
 ├── test/                # Test files (to be implemented)
-├── .env.example         # Example environment configuration
-├── .gitignore          # Git ignore patterns
+├── config.schema.json   # JSON schema for configuration validation
+├── config.example.json  # Example configuration file
 ├── package.json         # Project dependencies and scripts
 ├── README.md           # Comprehensive documentation
 └── LICENSE             # MIT License
@@ -22,11 +23,12 @@ This is a TypeScript CLI tool for uploading GitHub Action artifacts to Qiniu CDN
 
 ## Key Components
 
-1. **CLI Interface** (`src/cli.js`): Command-line argument parsing using Commander
-2. **Core Logic** (`src/index.js`): Qiniu SDK integration and file processing
-3. **Configuration**: Support for CLI args, environment variables, and .env files
+1. **CLI Interface** (`src/cli.ts`): Command-line argument parsing using Commander
+2. **Core Logic** (`src/index.ts`): Qiniu SDK integration and file processing
+3. **Configuration**: JSON configuration file with schema validation
 4. **File Processing**: Glob pattern matching and path mapping
 5. **Post-processing**: Script execution before upload
+6. **Type Safety**: Full TypeScript support with comprehensive type definitions
 
 ## Development Commands
 
@@ -58,11 +60,15 @@ pnpm run clean
 
 ## Configuration System
 
-The tool supports multiple configuration sources (in order of priority):
-1. CLI arguments (highest priority)
-2. Environment variables
-3. .env file values
-4. Default values
+The tool uses a JSON configuration file with schema validation:
+1. **Primary Configuration**: JSON file (default: `config.json`)
+2. **CLI Options**: Command-line options override config file settings
+3. **Schema Validation**: Automatic validation using `config.schema.json`
+
+### Command Line Options
+- **Config File**: `-c, --config <path>` (default: `config.json`)
+- **Verbose Mode**: `-v, --verbose` (default: enabled)
+- **Disable Verbose**: `--no-verbose` (disable detailed logging)
 
 ### Verbose Mode
 - **Default**: Verbose mode is enabled by default for better user experience
@@ -78,10 +84,10 @@ The tool supports multiple configuration sources (in order of priority):
 
 ## Security Considerations
 
-- Credentials are never logged
-- .env files are gitignored by default
-- Environment variables are recommended for production
-- Secret management best practices are documented
+- Credentials are never logged, even in verbose mode
+- Configuration files with credentials should not be committed to version control
+- Use secure secret management in production environments (CI/CD secrets)
+- JSON schema validation ensures configuration integrity
 
 ## Enhanced Features
 
@@ -101,9 +107,11 @@ The tool supports multiple configuration sources (in order of priority):
 
 ## Common Development Tasks
 
-1. **Adding new features**: Extend the config object and CLI options
+1. **Adding new features**: Extend the config schema and TypeScript types
 2. **Testing**: Add Jest tests for core functionality
 3. **Error handling**: Improve error messages and recovery
 4. **Performance**: Optimize large file uploads
-5. **Documentation**: Keep README updated with new features
-6. **UI/UX Improvements**: Enhance CLI output formatting and user experience
+5. **Configuration**: Update JSON schema for new configuration options
+6. **Documentation**: Keep README updated with new features
+7. **Type Safety**: Maintain comprehensive TypeScript type definitions
+8. **UI/UX Improvements**: Enhance CLI output formatting and user experience
