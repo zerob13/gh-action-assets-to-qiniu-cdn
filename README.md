@@ -45,6 +45,7 @@ Create `config.json` in your project:
 
 ```json
 {
+  "$schema": "./config.schema.json",
   "version": "1.0.0",
   "qiniu": {
     "accessKey": "your_qiniu_access_key",
@@ -212,7 +213,63 @@ Run scripts before uploading:
     "overwrite": false
   }
 }
+
+### Complete Multi-Platform Example
+
+This example downloads multiple platform artifacts and maps them to different CDN paths:
+
+```json
+{
+  "$schema": "./config.schema.json",
+  "version": "1.0.0",
+  "qiniu": {
+    "accessKey": "your_qiniu_access_key",
+    "secretKey": "your_qiniu_secret_key",
+    "bucket": "your_bucket_name",
+    "zone": "z0"
+  },
+  "github": {
+    "token": "your_github_pat",
+    "owner": "ThinkInAIXYZ",
+    "repo": "deepchat",
+    "artifactName": ["deepchat-linux-x64", "deepchat-mac-arm64", "deepchat-mac-x64", "deepchat-win-arm64", "deepchat-win-x64"]
+  },
+  "artifacts": {
+    "download": true,
+    "downloadDir": "./downloaded-artifacts",
+    "patterns": ["**/*"],
+    "pathMapping": {
+      "deepchat-linux-x64/": "onboarding/linuxx64/",
+      "deepchat-mac-arm64/": "onboarding/macarm/",
+      "deepchat-mac-x64/": "onboarding/macx64/",
+      "deepchat-win-arm64/": "onboarding/winarm64/",
+      "deepchat-win-x64/": "onboarding/winx64/"
+    }
+  },
+  "upload": {
+    "cdnBasePath": "",
+    "overwrite": true,
+    "cleanupAfterUpload": false
+  },
+  "options": {
+    "verbose": true,
+    "maxRetries": 3,
+    "timeout": 60000
+  }
+}
 ```
+
+This configuration will:
+1. Download all 5 platform-specific artifacts from GitHub
+2. Extract them to `./downloaded-artifacts/`
+3. Map files from each artifact to appropriate CDN paths:
+   - `deepchat-linux-x64/` → `onboarding/linuxx64/`
+   - `deepchat-mac-arm64/` → `onboarding/macarm/`
+   - `deepchat-mac-x64/` → `onboarding/macx64/`
+   - `deepchat-win-arm64/` → `onboarding/winarm64/`
+   - `deepchat-win-x64/` → `onboarding/winx64/`
+4. Upload all files with verbose progress reporting
+5. Keep downloaded files after upload (no cleanup)
 
 ## Advanced Examples
 
@@ -305,12 +362,137 @@ jobs:
 # build/app.zip → releases/v1.2.3/app.zip
 ```
 
+## Usage Guide
+
+### Environment Variables for Security
+
+For production use, prefer environment variables over config file credentials:
+
+```bash
+export QINIU_ACCESS_KEY=your_access_key
+export QINIU_SECRET_KEY=your_secret_key
+export QINIU_BUCKET=your_bucket_name
+export GITHUB_TOKEN=your_github_pat
+
+# Then run with minimal config:
+action-to-qiniu -c config.minimal.json
+```
+
+Create a minimal config file:
+
+```json
+{
+  "qiniu": {
+    "accessKey": "$QINIU_ACCESS_KEY",
+    "secretKey": "$QINIU_SECRET_KEY", 
+    "bucket": "$QINIU_BUCKET"
+  },
+  "github": {
+    "token": "$GITHUB_TOKEN",
+    "owner": "your-org",
+    "repo": "your-repo"
+  },
+  "artifacts": {
+    "download": true,
+    "patterns": ["**/*"]
+  }
+}
+```
+
+### Advanced Pattern Matching
+
+The tool supports powerful glob patterns for file selection:
+
+```json
+{
+  "artifacts": {
+    "patterns": [
+      "**/*.js",           // All JavaScript files
+      "**/*.css",          // All CSS files
+      "dist/**",           // Everything in dist directory
+      "build/*.{zip,tar.gz}", // Zip and tar.gz files in build
+      "!**/*.test.js",     // Exclude test files
+      "!**/node_modules/**" // Exclude node_modules
+    ]
+  }
+}
+```
+
+### Path Mapping Strategies
+
+#### Versioned Releases
+```json
+{
+  "pathMapping": {
+    "build/": "releases/v1.2.3/"
+  }
+}
+# build/app.zip → releases/v1.2.3/app.zip
+```
+
+#### Platform-Specific Deployment
+```json
+{
+  "pathMapping": {
+    "linux-build/": "platforms/linux/",
+    "mac-build/": "platforms/mac/",
+    "win-build/": "platforms/windows/"
+  }
+}
+```
+
+#### Asset Organization
+```json
+{
+  "pathMapping": {
+    "dist/js/": "assets/scripts/",
+    "dist/css/": "assets/styles/",
+    "dist/images/": "assets/images/",
+    "dist/fonts/": "assets/fonts/"
+  }
+}
+```
+
 ## Security Notes
 
 - Credentials are never logged, even in verbose mode
 - Use environment variables instead of config file for production
 - Never commit config files with credentials to version control
 - Consider using secret management services for production environments
+
+## Troubleshooting
+
+### Common Issues
+
+#### EISDIR: Illegal operation on a directory
+- **Cause**: The tool tried to upload a directory instead of files
+- **Solution**: Ensure your glob patterns exclude directories (use `nodir: true` internally)
+
+#### No artifacts found matching criteria
+- **Cause**: Artifact names don't match or artifacts have expired
+- **Solution**: Check artifact names in GitHub Actions and ensure they're not older than 90 days
+
+#### HTTP 403 Forbidden when downloading
+- **Cause**: GitHub artifact download URL expired or insufficient permissions
+- **Solution**: Regenerate GitHub token with proper permissions
+
+#### Upload timeout or connection issues
+- **Cause**: Network issues or Qiniu zone misconfiguration
+- **Solution**: Check Qiniu zone setting and network connectivity
+
+### Debug Mode
+
+Enable verbose logging to see detailed progress:
+
+```bash
+action-to-qiniu -v
+```
+
+Or check the full error stack:
+
+```bash
+action-to-qiniu -v 2>&1 | tee upload.log
+```
 
 ## Development
 
