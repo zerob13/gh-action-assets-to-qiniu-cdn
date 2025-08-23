@@ -53,8 +53,20 @@
           "description": "Specific workflow run ID"
         },
         "artifactName": {
-          "type": "string",
-          "description": "Specific artifact name to download"
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Specific artifact name to download"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Multiple artifact names to download"
+            }
+          ],
+          "description": "Artifact name(s) to download. Can be a single name or array of names."
         }
       }
     },

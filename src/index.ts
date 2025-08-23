@@ -47,8 +47,9 @@ async function downloadGitHubArtifact(config: AppConfig): Promise<DownloadResult
 
   const octokit = new Octokit({ auth: token });
   
-  // Ensure download directory exists
-  await fs.ensureDir(downloadDir);
+  // Ensure download directory exists (convert to absolute path)
+  const absoluteDownloadDir = path.resolve(downloadDir);
+  await fs.ensureDir(absoluteDownloadDir);
 
   let artifactsList: any[];
   
@@ -70,11 +71,20 @@ async function downloadGitHubArtifact(config: AppConfig): Promise<DownloadResult
   }
 
   if (artifactName) {
-    artifactsList = artifactsList.filter(artifact => artifact.name === artifactName);
+    if (Array.isArray(artifactName)) {
+      artifactsList = artifactsList.filter(artifact => artifactName.includes(artifact.name));
+    } else {
+      artifactsList = artifactsList.filter(artifact => artifact.name === artifactName);
+    }
   }
 
   if (artifactsList.length === 0) {
-    throw new Error('No artifacts found matching criteria');
+    if (artifactName) {
+      const names = Array.isArray(artifactName) ? artifactName.join(', ') : artifactName;
+      throw new Error(`No artifacts found matching: ${names}`);
+    } else {
+      throw new Error('No artifacts found');
+    }
   }
 
   if (options?.verbose) {
@@ -137,7 +147,7 @@ async function downloadGitHubArtifact(config: AppConfig): Promise<DownloadResult
     }
 
     const downloadUrl = downloadResponse.url;
-    const artifactDir = path.join(downloadDir, artifact.name);
+    const artifactDir = path.join(absoluteDownloadDir, artifact.name);
     const zipPath = path.join(artifactDir, `${artifact.name}.zip`);
     
     await fs.ensureDir(artifactDir);
@@ -189,7 +199,7 @@ async function downloadGitHubArtifact(config: AppConfig): Promise<DownloadResult
     const writer = fs.createWriteStream(zipPath);
     
     if (options?.verbose && totalSize > 0) {
-      console.log(`   ⬇️  Starting download... (${formatBytes(totalSize)})`);
+      process.stdout.write(`   ⬇️  Starting download... (${formatBytes(totalSize)})\n`);
     }
     
     response.data.on('data', (chunk: Buffer) => {
@@ -200,13 +210,14 @@ async function downloadGitHubArtifact(config: AppConfig): Promise<DownloadResult
         const progress = Math.round((downloadedSize / totalSize) * 100);
         const timeDiff = currentTime - lastUpdateTime;
         
-        // Update progress every 5% or every 2 seconds, whichever comes first
-        if ((progress !== lastProgress && progress % 5 === 0) || timeDiff >= 2000) {
+        // Update progress every 1% or every 1 second, whichever comes first
+        if ((progress !== lastProgress && progress % 1 === 0) || timeDiff >= 1000) {
           const elapsedTime = (currentTime - startTime) / 1000;
           const downloadSpeed = downloadedSize / elapsedTime;
           const eta = totalSize > downloadedSize ? (totalSize - downloadedSize) / downloadSpeed : 0;
           
-          console.log(`   📥 Progress: ${progress}% (${formatBytes(downloadedSize)}/${formatBytes(totalSize)}) | Speed: ${formatBytes(downloadSpeed)}/s | ETA: ${Math.round(eta)}s`);
+          // Use ANSI escape codes to update the same line
+          process.stdout.write(`\r   📥 Progress: ${progress}% (${formatBytes(downloadedSize)}/${formatBytes(totalSize)}) | Speed: ${formatBytes(downloadSpeed)}/s | ETA: ${Math.round(eta)}s`);
           lastProgress = progress;
           lastUpdateTime = currentTime;
         }
@@ -223,6 +234,8 @@ async function downloadGitHubArtifact(config: AppConfig): Promise<DownloadResult
     if (options?.verbose) {
       const downloadTime = (Date.now() - startTime) / 1000;
       const avgSpeed = totalSize > 0 ? formatBytes(totalSize / downloadTime) : 'N/A';
+      // Add newline to clear the progress line and show completion
+      process.stdout.write('\n');
       console.log(`   ✅ Download completed in ${downloadTime.toFixed(1)}s (avg speed: ${avgSpeed}/s)`);
       console.log(`   📂 Extracting archive...`);
     }
@@ -234,7 +247,7 @@ async function downloadGitHubArtifact(config: AppConfig): Promise<DownloadResult
       if (options?.verbose) {
         // Count extracted files
         const extractedFiles = await glob('**/*', { cwd: artifactDir, nodir: true });
-        console.log(`   🗂️  Extracted ${extractedFiles.length} file(s) to: ${artifactDir}`);
+        process.stdout.write(`\r   🗂️  Extracted ${extractedFiles.length} file(s) to: ${artifactDir}\n`);
       }
     } catch (error) {
       if (options?.verbose) {
@@ -387,8 +400,8 @@ async function uploadToQiniu(config: AppConfig, sourceDir: string): Promise<Uplo
           if (uploadedBytes < fileSize) {
             uploadedBytes = Math.min(uploadedBytes + Math.floor(fileSize / 10), fileSize);
             const progress = Math.round((uploadedBytes / fileSize) * 100);
-            if (progress !== lastUploadProgress && progress % 20 === 0) {
-              console.log(`📤 Uploading ${relativePath}: ${progress}% (${formatBytes(uploadedBytes)}/${formatBytes(fileSize)})`);
+            if (progress !== lastUploadProgress && progress % 10 === 0) {
+              process.stdout.write(`\r📤 Uploading ${relativePath}: ${progress}% (${formatBytes(uploadedBytes)}/${formatBytes(fileSize)})`);
               lastUploadProgress = progress;
             }
           } else {
@@ -399,6 +412,8 @@ async function uploadToQiniu(config: AppConfig, sourceDir: string): Promise<Uplo
         // Wait for upload to complete
         await new Promise(resolve => setTimeout(resolve, 2000));
         clearInterval(uploadInterval);
+        // Add newline to clear the upload progress line
+        process.stdout.write('\n');
       }
 
       uploadedFiles.push({

@@ -124,7 +124,7 @@ To download artifacts from GitHub Actions:
     "owner": "your-username",     // Repository owner
     "repo": "your-repo",          // Repository name
     "runId": 123456789,           // Optional: Specific workflow run ID
-    "artifactName": "build"       // Optional: Specific artifact name
+    "artifactName": "build"       // Optional: Specific artifact name or array of names
   },
   "artifacts": {
     "download": true,             // Enable artifact download
@@ -163,7 +163,7 @@ Run scripts before uploading:
     "token": "github_pat_...",
     "owner": "my-organization",
     "repo": "my-project",
-    "artifactName": "production-build"
+    "artifactName": ["production-build", "documentation", "test-coverage"]
   },
   "artifacts": {
     "download": true,

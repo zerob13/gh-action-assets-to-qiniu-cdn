@@ -12,7 +12,7 @@
     "owner": "your_username_or_org",
     "repo": "your_repository_name",
     "runId": 123456789,
-    "artifactName": "production-build"
+    "artifactName": ["production-build", "docs", "test-results"]
   },
   "artifacts": {
     "download": true,
