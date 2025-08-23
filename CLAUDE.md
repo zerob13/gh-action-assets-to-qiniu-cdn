@@ -86,13 +86,15 @@ The tool supports multiple configuration sources (in order of priority):
 ## Enhanced Features
 
 ### Progress Indicators & Rich Output
-- **Download Progress**: Real-time progress bars showing download percentage and file sizes
-- **Upload Progress**: Simulated progress indicators for Qiniu uploads with file size information
+- **In-Place Download Progress**: Real-time progress updates using ANSI escape codes (no multiple lines)
+- **In-Place Upload Progress**: Simulated progress indicators for Qiniu uploads with file size information
 - **Rich CLI Output**: Color-coded, formatted output with emojis and clear section headers
 - **Detailed Summaries**: Comprehensive upload/download summaries with file listings and statistics
 
 ### Improved User Experience
 - **Verbose Mode**: Enhanced verbose logging with step-by-step progress updates
+- **Multiple Artifact Support**: Download multiple artifacts using array configuration
+- **Absolute Path Handling**: Automatic conversion of relative paths to absolute for reliable extraction
 - **Error Reporting**: Detailed error messages with file-specific error information
 - **File Size Formatting**: Human-readable file size formatting (KB, MB, GB)
 - **Visual Separators**: Clear visual separators between different process stages
