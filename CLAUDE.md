@@ -67,6 +67,11 @@ The tool supports multiple configuration sources (in order of priority):
 3. .env file values
 4. Default values
 
+### Verbose Mode
+- **Default**: Verbose mode is enabled by default for better user experience
+- **Disable**: Use `--no-verbose` flag to disable verbose output
+- **Override**: CLI options take precedence over config file settings
+
 ## Qiniu Integration
 
 - Uses the official Qiniu Node.js SDK
@@ -81,6 +86,20 @@ The tool supports multiple configuration sources (in order of priority):
 - Environment variables are recommended for production
 - Secret management best practices are documented
 
+## Enhanced Features
+
+### Progress Indicators & Rich Output
+- **Download Progress**: Real-time progress bars showing download percentage and file sizes
+- **Upload Progress**: Simulated progress indicators for Qiniu uploads with file size information
+- **Rich CLI Output**: Color-coded, formatted output with emojis and clear section headers
+- **Detailed Summaries**: Comprehensive upload/download summaries with file listings and statistics
+
+### Improved User Experience
+- **Verbose Mode**: Enhanced verbose logging with step-by-step progress updates
+- **Error Reporting**: Detailed error messages with file-specific error information
+- **File Size Formatting**: Human-readable file size formatting (KB, MB, GB)
+- **Visual Separators**: Clear visual separators between different process stages
+
 ## Common Development Tasks
 
 1. **Adding new features**: Extend the config object and CLI options
@@ -88,3 +107,4 @@ The tool supports multiple configuration sources (in order of priority):
 3. **Error handling**: Improve error messages and recovery
 4. **Performance**: Optimize large file uploads
 5. **Documentation**: Keep README updated with new features
+6. **UI/UX Improvements**: Enhance CLI output formatting and user experience
