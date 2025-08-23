@@ -99,14 +99,42 @@ async function downloadGitHubArtifact(config: AppConfig): Promise<DownloadResult
       if (artifact.size_in_bytes) {
         console.log(`   📏 Size: ${formatBytes(artifact.size_in_bytes)}`);
       }
+      
+      // Check if artifact is expired
+      const createdAt = new Date(artifact.created_at);
+      const now = new Date();
+      const daysOld = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+      if (daysOld > 90) {
+        console.log(`   ⚠️  Warning: Artifact is ${Math.round(daysOld)} days old (GitHub artifacts expire after 90 days)`);
+      }
     }
     
-    const downloadResponse = await octokit.actions.downloadArtifact({
-      owner,
-      repo,
-      artifact_id: artifact.id,
-      archive_format: 'zip'
-    });
+    let downloadResponse;
+    try {
+      downloadResponse = await octokit.actions.downloadArtifact({
+        owner,
+        repo,
+        artifact_id: artifact.id,
+        archive_format: 'zip'
+      });
+      
+      if (options?.verbose) {
+        console.log(`   🔗 Download URL obtained successfully`);
+      }
+    } catch (error) {
+      if (options?.verbose) {
+        console.error(`   ❌ Failed to get download URL for ${artifact.name}:`);
+        console.error(`   Error: ${(error as Error).message}`);
+        
+        if ((error as any).status === 403) {
+          console.error(`   💡 This could be due to:`);
+          console.error(`      - Artifact has expired (GitHub artifacts expire after 90 days)`);
+          console.error(`      - Insufficient token permissions (need 'actions:read' scope)`);
+          console.error(`      - Token has expired or is invalid`);
+        }
+      }
+      throw error;
+    }
 
     const downloadUrl = downloadResponse.url;
     const artifactDir = path.join(downloadDir, artifact.name);
@@ -119,15 +147,38 @@ async function downloadGitHubArtifact(config: AppConfig): Promise<DownloadResult
     }
 
     // Download the artifact with progress
-    const response = await axios({
-      method: 'GET',
-      url: downloadUrl,
-      responseType: 'stream',
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: 'application/vnd.github.v3+json'
+    // Note: downloadUrl from GitHub API already contains authentication
+    let response;
+    try {
+      response = await axios({
+        method: 'GET',
+        url: downloadUrl,
+        responseType: 'stream',
+        timeout: 30000, // 30 second timeout
+        headers: {
+          'User-Agent': 'gh-action-assets-to-qiniu-cdn/1.0.0'
+        }
+      });
+    } catch (error) {
+      if (options?.verbose) {
+        console.error(`   ❌ Failed to start download for ${artifact.name}:`);
+        console.error(`   Error: ${(error as any).message}`);
+        
+        if (axios.isAxiosError(error)) {
+          if (error.response?.status === 403) {
+            console.error(`   💡 HTTP 403 Forbidden - This could be due to:`);
+            console.error(`      - Artifact has expired (GitHub artifacts expire after 90 days)`);
+            console.error(`      - Download URL has expired (URLs are temporary)`);
+            console.error(`      - Insufficient permissions or invalid token`);
+          } else if (error.response?.status === 404) {
+            console.error(`   💡 HTTP 404 Not Found - Artifact may have been deleted`);
+          } else if (error.response?.status) {
+            console.error(`   💡 HTTP ${error.response.status}: ${error.response.statusText}`);
+          }
+        }
       }
-    });
+      throw error;
+    }
 
     const totalSize = parseInt(response.headers['content-length'] || '0', 10);
     let downloadedSize = 0;
