@@ -320,26 +320,34 @@ async function uploadToQiniu(config: AppConfig, sourceDir: string): Promise<Uplo
   const formUploader = new qiniu.form_up.FormUploader(qiniuSdkConfig);
   const putExtra = new qiniu.form_up.PutExtra();
 
-  // Find files to upload
+  // Find files to upload (exclude directories)
   const files: string[] = [];
   for (const pattern of patterns) {
-    const matches = glob.sync(pattern, { cwd: sourceDir, absolute: true });
+    const matches = glob.sync(pattern, { cwd: sourceDir, absolute: true, nodir: true });
     files.push(...matches);
   }
 
-  if (files.length === 0) {
+  // Filter out any remaining directories (in case glob nodir doesn't work perfectly)
+  const fileStats = await Promise.all(files.map(async file => {
+    const stat = await fs.stat(file);
+    return { file, isFile: stat.isFile() };
+  }));
+  
+  const filteredFiles = fileStats.filter(({ isFile }) => isFile).map(({ file }) => file);
+
+  if (filteredFiles.length === 0) {
     throw new Error('No files found matching the specified patterns');
   }
 
   if (options?.verbose) {
-    console.log(`📁 Found ${files.length} files to upload from: ${sourceDir}`);
+    console.log(`📁 Found ${filteredFiles.length} files to upload from: ${sourceDir}`);
   }
 
   // Upload files
   const uploadedFiles: any[] = [];
   const failedFiles: any[] = [];
 
-  for (const localFilePath of files) {
+  for (const localFilePath of filteredFiles) {
     const relativePath = path.relative(sourceDir, localFilePath);
     
     // Apply path mapping
