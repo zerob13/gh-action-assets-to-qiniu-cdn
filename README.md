@@ -317,34 +317,28 @@ jobs:
 This project is built with TypeScript and designed to run with Node.js and pnpm.
 
 ```bash
+# Install dependencies
 pnpm install
-```
 
-```bash
+# Build TypeScript to JavaScript
 pnpm run build
-```
 
-```bash
+# Run with example config (development mode)
 pnpm run dev
-```
 
-```bash
+# Run with custom config
 pnpm run dev -- -c config.example.json -v
-```
 
-```bash
+# Run tests
 pnpm test
-```
 
-```bash
+# Start the built version
 pnpm start
-```
 
-```bash
+# Lint code
 pnpm run lint
-```
 
-```bash
+# Clean build artifacts
 pnpm run clean
 ```
 
