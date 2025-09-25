@@ -39,7 +39,7 @@
     "extract-zip": "^2.0.0"
   },
   "devDependencies": {
-    "@types/glob": "^8.1.0",
+    "@types/glob": "^9.0.0",
     "@types/extract-zip": "^2.0.0",
     "@types/fs-extra": "^11.0.1",
     "@types/node": "^20.5.0",
