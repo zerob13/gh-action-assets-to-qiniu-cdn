@@ -43,7 +43,7 @@
     "@types/extract-zip": "^2.0.0",
     "@types/fs-extra": "^11.0.1",
     "@types/node": "^20.5.0",
-    "typescript": "^5.1.6",
+    "typescript": "^7.0.0",
     "tsx": "^4.7.0",
     "jest": "^29.7.0",
     "@types/jest": "^29.5.8"
